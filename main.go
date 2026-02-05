@@ -61,12 +61,16 @@ func Validate(config string) error {
 		}
 	}
 
-	if !strings.Contains(conf.Headers, ":") && conf.Headers != "" {
-		return fmt.Errorf("header format must be \"header:value;header:value\" ; got: %v", conf.Headers)
-	}
-
-	if strings.Count(conf.Headers, ":") != 1 && !strings.Contains(conf.Headers, ";") {
-		return fmt.Errorf("header format must be \"header:value;header:value\" ; got: %v", conf.Headers)
+	if conf.Headers != "" {
+		for _, raw := range strings.Split(conf.Headers, ";") {
+			if raw == "" {
+				return fmt.Errorf("header format must be \"header:value;header:value\" ; got: %v", conf.Headers)
+			}
+			parts := strings.SplitN(raw, ":", 2)
+			if len(parts) != 2 || strings.TrimSpace(parts[0]) == "" || strings.TrimSpace(parts[1]) == "" {
+				return fmt.Errorf("header format must be \"header:value;header:value\" ; got: %v", conf.Headers)
+			}
+		}
 	}
 
 	if conf.ContentType == "empty" && conf.Body != "" {
