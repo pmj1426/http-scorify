@@ -1,6 +1,7 @@
 package http
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -10,7 +11,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"bytes"
 
 	"github.com/scorify/schema"
 )
@@ -21,7 +21,8 @@ type Schema struct {
 	ExpectedOutput string `key:"expected_output"`
 	MatchType      string `key:"match_type" default:"statusCode" enum:"statusCode,substringMatch,exactMatch,regexMatch"`
 	Insecure       bool   `key:"insecure"`
-	Body	       string `key:"body"`
+	Headers        string `key:"headers"`
+	Body           string `key:"body"`
 	ContentType    string `key:"content_type" default:"empty" enum:"plain/text,application/json,x-www-form-urlencoded,empty"`
 }
 
@@ -59,7 +60,19 @@ func Validate(config string) error {
 			return fmt.Errorf("invalid status code provided: %d", status_code)
 		}
 	}
-	
+
+	if conf.Headers != "" {
+		for _, raw := range strings.Split(conf.Headers, ";") {
+			if raw == "" {
+				return fmt.Errorf("header format must be \"header:value;header:value\" ; got: %v", conf.Headers)
+			}
+			parts := strings.SplitN(raw, ":", 2)
+			if len(parts) != 2 || strings.TrimSpace(parts[0]) == "" || strings.TrimSpace(parts[1]) == "" {
+				return fmt.Errorf("header format must be \"header:value;header:value\" ; got: %v", conf.Headers)
+			}
+		}
+	}
+
 	if conf.ContentType == "empty" && conf.Body != "" {
 		return fmt.Errorf("body must not be provided when using empty Content-Type; got: %v", conf.Body)
 	}
@@ -113,6 +126,14 @@ func Run(ctx context.Context, config string) error {
 		if err != nil {
 			return fmt.Errorf("encounted error while creating request: %v", err.Error())
 		}
+		if strings.Contains(conf.Headers, ";") {
+			for _, element := range strings.Split(conf.Headers, ";") {
+				req.Header.Add(strings.Split(element, ":")[0], strings.Split(element, ":")[1])
+			}
+		} else {
+			req.Header.Add(strings.Split(conf.Headers, ":")[0], strings.Split(conf.Headers, ":")[1])
+		}
+
 	} else {
 		req, err = http.NewRequestWithContext(ctx, requestType, conf.URL, bytes.NewBufferString(conf.Body))
 		if err != nil {
