@@ -1,4 +1,4 @@
-package http-scorify
+package http
 
 import (
 	"bytes"
