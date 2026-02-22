@@ -137,11 +137,19 @@ func Run(ctx context.Context, config string) error {
 
 	if conf.Headers != "" {
 		if strings.Contains(conf.Headers, ";") {
-			for _, element := range strings.Split(conf.Headers, ";") {
+			headers := strings.Split(conf.Headers, ";")
+			if len(headers)%2 == 0 {
+				return fmt.Errorf("header format must be \"header:value;header:value\" ; got: %v", conf.Headers)
+			}
+			for _, element := range headers {
 				req.Header.Add(strings.Split(element, ":")[0], strings.Split(element, ":")[1])
 			}
 		} else {
-			req.Header.Add(strings.Split(conf.Headers, ":")[0], strings.Split(conf.Headers, ":")[1])
+			headers := strings.Split(conf.Headers, ";")
+			if len(headers)%2 == 0 {
+				return fmt.Errorf("header format must be \"header:value;header:value\" ; got: %v", conf.Headers)
+			}
+			req.Header.Add(headers[0], headers[1])
 		}
 	}
 
