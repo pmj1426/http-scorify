@@ -136,11 +136,13 @@ func Run(ctx context.Context, config string) error {
 	}
 
 	if conf.Headers != "" {
-		for _, element := range strings.Split(conf.Headers, ";") {
-			req.Header.Add(strings.Split(element, ":")[0], strings.Split(element, ":")[1])
+		if strings.Contains(conf.Headers, ";") {
+			for _, element := range strings.Split(conf.Headers, ";") {
+				req.Header.Add(strings.Split(element, ":")[0], strings.Split(element, ":")[1])
+			}
+		} else {
+			req.Header.Add(strings.Split(conf.Headers, ":")[0], strings.Split(conf.Headers, ":")[1])
 		}
-	} else {
-		req.Header.Add(strings.Split(conf.Headers, ":")[0], strings.Split(conf.Headers, ":")[1])
 	}
 
 	tls_config := &tls.Config{InsecureSkipVerify: conf.Insecure}
