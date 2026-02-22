@@ -1,4 +1,4 @@
-module github.com/scorify/http
+module github.com/pmj1426/http-scorify
 
 go 1.24.0
 
